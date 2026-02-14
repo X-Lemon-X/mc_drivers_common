@@ -53,6 +53,7 @@ namespace mcan {
 
 #define CAN_REMOTE_REQUEST_FLAG 0x40000000
 
+static constexpr size_t MAX_STRUCT_SIZE = 16320;
 
 enum class DeviceMode : std::uint8_t {
   UNDEFINED     = 0,
@@ -78,7 +79,7 @@ Status mcan_pack_send_msg(mcan::CanBase &can_interface, const T &struct_to_send,
   static_assert(
   std::is_member_pointer_v<decltype(&T::k_base_address)> || requires { T::k_base_address; },
   "Type T must have k_base_address member or constant");
-  static_assert(sizeof(T) <= 16320, "Struct size too big to send over CAN");
+  static_assert(sizeof(T) <= MAX_STRUCT_SIZE, "Struct size too big to send over CAN");
   CanFrame frame;
   frame.id = mcan_connect_msg_id_with_node_id(T::k_base_address, node_id);
 
@@ -107,6 +108,22 @@ Status mcan_pack_send_msg(mcan::CanBase &can_interface, const T &struct_to_send,
     }
   }
   return Status::OK();
+}
+
+template <typename T>
+Status mcan_request_msg(mcan::CanBase &can_interface, const T &struct_to_send, int node_id) {
+  (void)struct_to_send; // in case struct is empty and we are not using it to get base address
+  static_assert(
+  std::is_member_pointer_v<decltype(&T::k_base_address)> || requires { T::k_base_address; },
+  "Type T must have k_base_address member or constant");
+  static_assert(sizeof(T) <= MAX_STRUCT_SIZE, "Struct size too big to send over CAN");
+  CanFrame frame;
+  frame.id = mcan_connect_msg_id_with_node_id(T::k_base_address, node_id, true);
+
+  frame.size              = 0;
+  frame.is_extended       = true;
+  frame.is_remote_request = true;
+  return can_interface.send(frame);
 }
 
 /// @brief Unpack a received CAN frame into the provided structure.
