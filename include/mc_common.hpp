@@ -163,4 +163,20 @@ Status mcan_unpack_msg(const CanFrame &frame, CanMultiPackageFrame<T> &struct_to
   }
 }
 
+template <typename T>
+Result<CanFrame>
+mcan_request_and_await_msg(mcan::CanBase &can_interface, const T &strcut_to_receive, int node_id, uint32_t timeout_ms = 1500) {
+  static_assert(
+  std::is_member_pointer_v<decltype(&T::k_base_address)> || requires { T::k_base_address; },
+  "Type T must have k_base_address member or constant");
+  static_assert(sizeof(T) <= 8, "Struct size too big to send over CAN");
+  uint32_t expected_response_id = mcan_connect_msg_id_with_node_id(T::k_base_address, node_id, false);
+  CanFrame frame;
+  frame.id                = mcan_connect_msg_id_with_node_id(T::k_base_address, node_id, true);
+  frame.size              = 0;
+  frame.is_extended       = true;
+  frame.is_remote_request = true;
+  ARI_RETURN_ON_ERROR(can_interface.send_await_response(frame, expected_response_id, timeout_ms));
+}
+
 } // namespace mcan
