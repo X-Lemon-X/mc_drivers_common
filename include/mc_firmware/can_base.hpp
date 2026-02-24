@@ -26,18 +26,17 @@ SOFTWARE.
 
 #pragma once
 
-
 #include "status.hpp"
-#include <functional>
 #include <condition_variable>
+#include <functional>
 
 namespace mcan {
 
 static constexpr uint32_t CAN_ANY_FRAME = 0;
 
-
 /// @brief CAN data frame.
-struct CanFrame {
+struct CanFrame
+{
 
   /// @brief CAN ID of the frame. Either standard (11 bits) or extended (29 bits).
   uint32_t id;
@@ -55,32 +54,39 @@ struct CanFrame {
   bool is_extended;
 };
 
-
-class CanBase {
-public:
-  using can_callback_type = std::function<void(CanBase &, const CanFrame &, void *)>;
+class CanBase
+{
+ public:
+  using can_callback_type = std::function<void(CanBase&, const CanFrame&, void*)>;
   virtual ~CanBase(){};
 
   /// @brief Send a CAN frame to the CAN bus.
   /// @param frame The CAN frame to send.
-  /// @note The frame will be sent to the CAN bus immediately if the driver is not threaded.
+  /// @note The frame will be sent to the CAN bus immediately if the driver is not
+  /// threaded.
   /// @return Status of the operation.
-  virtual Status send(const CanFrame &frame) = 0;
+  virtual Status send(const CanFrame& frame) = 0;
 
   /// @brief Send can frame and wait for response with specific CAN ID.
   /// @param frame The CAN frame to send.
-  /// @param response_id The CAN ID of the expected response frame. If CAN_ANY_FRAME is used the first received frame will be returned.
+  /// @param response_id The CAN ID of the expected response frame. If CAN_ANY_FRAME is
+  /// used the first received frame will be returned.
   /// @param timeout_ms  The timeout in milliseconds to wait for the response frame.
   /// @return Result containing the received CAN frame or an error status.
-  virtual Result<CanFrame>
-  send_await_response(const CanFrame &frame, uint32_t response_id, uint32_t timeout_ms = 1000) = 0;
+  virtual Result<CanFrame> send_await_response(const CanFrame& frame,
+                                               uint32_t response_id,
+                                               uint32_t timeout_ms = 1000) = 0;
 
   /// @brief Add a callback for a specific CAN ID.
-  /// @param id The CAN ID to listen for, if you want to receive callback for a remote request you have to set by adding specific bit to ID
-  /// @param callback The callback function to call when a frame with the specified ID is received.
+  /// @param id The CAN ID to listen for, if you want to receive callback for a remote
+  /// request you have to set by adding specific bit to ID
+  /// @param callback The callback function to call when a frame with the specified ID is
+  /// received.
   /// @param args Optional arguments to pass to the callback function.
   /// @return Status of the operation.
-  virtual Status add_callback(uint32_t id, can_callback_type callback, void *args = nullptr) = 0;
+  virtual Status add_callback(uint32_t id,
+                              can_callback_type callback,
+                              void* args = nullptr) = 0;
 
   /// @brief Remove a callback for a specific CAN ID.
   /// @param id The CAN ID to remove the callback for.
