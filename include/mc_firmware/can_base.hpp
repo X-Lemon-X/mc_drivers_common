@@ -88,10 +88,40 @@ class CanBase
                               can_callback_type callback,
                               void* args = nullptr) = 0;
 
+  /// @brief Add a callback for a specific CAN IDs with mask.
+  /// so one callback can be used for multiple CAN IDs by using mask to specify which bits
+  /// of the ID should be matched.
+  /// @param id_base The base CAN ID to listen for, the bits that are not
+  /// masked will be ignored when matching incoming frames.
+  /// @param id_mask The mask to apply to incoming CAN IDs when matching, bits set
+  /// to 1 in the mask will be compared to the corresponding bits in the base ID, bits set
+  /// to 0 will be ignored.
+  /// @param callback The callback function to call when a frame with the specified ID is
+  /// received.
+  /// @param args Optional arguments to pass to the callback function.
+  /// @return Status of the operation.
+  /// @note When using masked callbacks, if a id matches a masked callback and a
+  /// non-masked callback, only the regural callback will be called, and the masked one
+  /// will be ignored. if matching multiple masked callbacks, only the first one that
+  /// matches will be called, the order of matching is not guaranteed, so if you have
+  /// multiple masked callbacks that can match the same ID, you should make sure that the
+  /// most specific one (the one with the most bits set in the mask) is added first, to
+  /// ensure that it will be matched before less specific ones. will be called.
+  virtual Status add_callback_masked(uint32_t id_base,
+                                     uint32_t id_mask,
+                                     can_callback_type callback,
+                                     void* args = nullptr) = 0;
+
   /// @brief Remove a callback for a specific CAN ID.
   /// @param id The CAN ID to remove the callback for.
   /// @return Status of the operation.
   virtual Status remove_callback(uint32_t id) = 0;
+
+  /// @brief Remove a masked callback for a specific CAN ID.
+  /// @param id_base The base CAN ID of the callback to remove.
+  /// @param id_mask The mask of the callback to remove.
+  /// @return Status of the operation.
+  virtual Status remove_callback_masked(uint32_t id_base, uint32_t id_mask) = 0;
 
   /// @brief Open the CAN socket.
   /// this should create two threads to handle CAN tx and rx with callbacks.
