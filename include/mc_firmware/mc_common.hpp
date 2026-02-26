@@ -82,7 +82,10 @@ mcan_connect_msg_id_with_node_id(uint32_t uid_21_bit,
 
 template<typename T>
 Status
-mcan_pack_send_msg(mcan::CanBase& can_interface, const T& struct_to_send, uint8_t node_id)
+mcan_pack_send_msg(mcan::CanBase& can_interface,
+                   const T& struct_to_send,
+                   uint8_t node_id,
+                   uint32_t override_can_id = 0)
 {
   static_assert(
     std::is_member_pointer_v<decltype(&T::k_base_address)> || requires {
@@ -90,7 +93,11 @@ mcan_pack_send_msg(mcan::CanBase& can_interface, const T& struct_to_send, uint8_
     }, "Type T must have k_base_address member or constant");
   static_assert(sizeof(T) <= MAX_STRUCT_SIZE, "Struct size too big to send over CAN");
   CanFrame frame;
-  frame.id = mcan_connect_msg_id_with_node_id(T::k_base_address, node_id);
+  if (override_can_id != 0) {
+    frame.id = override_can_id;
+  } else {
+    frame.id = mcan_connect_msg_id_with_node_id(T::k_base_address, node_id);
+  }
 
   if constexpr (sizeof(T::value) <= 8) {
     frame.size = sizeof(T::value);
