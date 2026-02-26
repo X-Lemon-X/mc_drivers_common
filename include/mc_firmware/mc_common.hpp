@@ -197,7 +197,7 @@ mcan_unpack_msg(const CanFrame& frame, CanMultiPackageFrame<T>& struct_to_receiv
 template<typename T>
 Result<CanFrame>
 mcan_request_and_await_msg(mcan::CanBase& can_interface,
-                           const T& strcut_to_receive,
+                           T& strcut_to_receive,
                            uint8_t node_id,
                            uint32_t timeout_ms = 1500)
 {
@@ -213,8 +213,13 @@ mcan_request_and_await_msg(mcan::CanBase& can_interface,
   frame.size = 0;
   frame.is_extended = true;
   frame.is_remote_request = true;
-  ARI_RETURN_ON_ERROR(
-    can_interface.send_await_response(frame, expected_response_id, timeout_ms));
+  ARI_ASIGN_OR_RETURN(
+    response, can_interface.send_await_response(frame, expected_response_id, timeout_ms));
+
+  CanMultiPackageFrame<T> buf_receive;
+  ARI_RETURN_ON_ERROR(mcan_unpack_msg(response, buf_receive));
+  strcut_to_receive.value = buf_receive.value;
+  return Status::OK();
 }
 
 } // namespace mcan
