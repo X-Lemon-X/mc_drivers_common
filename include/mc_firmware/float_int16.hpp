@@ -14,23 +14,23 @@ struct FloatInt16_t
   }
 
   FloatInt16_t(float f)
-    : value(static_cast<int16_t>(f / Scale))
+    : value(static_cast<int16_t>(f * Scale))
   {
   }
 
-  explicit operator float() const { return static_cast<float>(value) * Scale; }
+  explicit operator float() const { return static_cast<float>(value) / Scale; }
 
   FloatInt16_t& operator=(float f)
   {
-    value = static_cast<int16_t>(f / Scale);
+    value = static_cast<int16_t>(f * Scale);
     return *this;
   }
 
-  explicit operator double() const { return static_cast<double>(value) * Scale; }
+  operator double() const { return static_cast<double>(value) / Scale; }
 
   FloatInt16_t& operator=(double d)
   {
-    value = static_cast<int16_t>(d / Scale);
+    value = static_cast<int16_t>(d * Scale);
     return *this;
   }
 };
